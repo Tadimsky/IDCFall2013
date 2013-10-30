@@ -4,25 +4,50 @@
 '{$PBASIC 2.5}
 qti VAR Nib
 DO
-Right: HIGH 5: PAUSE 1: qti.BIT0 = IN3: INPUT 5
-Center: HIGH 6: PAUSE 1: qti.BIT1 = IN3: INPUT 6
-Left: HIGH 7: PAUSE 1: qti.BIT2 = IN3: INPUT 7
-SELECT qti
-CASE %010 ' Forward
-PULSOUT 13, 2125
-PULSOUT 12, 1625
-CASE %011 ' Pivot right
-PULSOUT 13, 2125
-PULSOUT 12, 1875
-CASE %001 ' Rotate right
-PULSOUT 13, 2125
-PULSOUT 12, 2125
-CASE %110 ' Pivot Left
-PULSOUT 13, 1875
-PULSOUT 12, 1625
-CASE %100 ' Rotate Left
-PULSOUT 13, 1625
-PULSOUT 12, 1625
-ENDSELECT
-PAUSE 20
+  GOSUB ReadLineDetector
+  
+  SELECT qti
+    CASE %010 ' Forward
+      GOSUB ForwardMove
+    CASE %011 ' Pivot right
+      GOSUB RightPivot
+    CASE %001 ' Rotate right
+      GOSUB RightRotate
+    CASE %110 ' Pivot Left
+      GOSUB LeftPivot
+    CASE %100 ' Rotate Left
+      GOSUB LeftRotate
+  ENDSELECT
+  PAUSE 20
 LOOP
+
+ReadLineDetector:
+  Right: HIGH 5: PAUSE 1: qti.BIT0 = IN3: INPUT 5
+  Center: HIGH 6: PAUSE 1: qti.BIT1 = IN3: INPUT 6
+  Left: HIGH 7: PAUSE 1: qti.BIT2 = IN3: INPUT 7
+RETURN
+
+ForwardMove:
+  PULSOUT 13, 2125
+  PULSOUT 12, 1625
+RETURN
+
+LeftRotate:
+  PULSOUT 13, 1625
+  PULSOUT 12, 1625
+RETURN
+
+LeftPivot:
+  PULSOUT 13, 1875
+  PULSOUT 12, 1625
+RETURN
+
+RightRotate:
+  PULSOUT 13, 2125
+  PULSOUT 12, 2125
+RETURN
+
+RightPivot:
+  PULSOUT 13, 2125
+  PULSOUT 12, 1875
+RETURN
