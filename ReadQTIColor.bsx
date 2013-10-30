@@ -1,0 +1,85 @@
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+
+SnsrLeft CON 10
+SnsrMiddle CON 9
+SnsrRight CON 8
+
+moveDistance CON 10
+
+reps    VAR     Nib
+
+leftDuration VAR Word
+middleDuration VAR Word
+rightDuration VAR Word
+
+READ_Sensor:
+  HIGH SnsrLeft
+  PAUSE 1
+  RCTIME SnsrLeft, 1, leftDuration
+
+  HIGH SnsrMiddle
+  PAUSE 1
+  RCTIME SnsrMiddle, 1, middleDuration
+
+  HIGH SnsrRight
+  PAUSE 1
+  RCTIME SnsrRight, 1, rightDuration
+
+    DEBUG CLS, "Right Color", DEC rightDuration, CR
+
+Determine_Color:
+  IF middleDuration < 10 THEN
+    GOSUB LeftRotate
+  ENDIF
+
+  IF middleDuration > 100 THEN
+    GOSUB ForwardMove
+  ENDIF
+
+  IF middleDuration < 100 AND middleDuration > 10 THEN
+    GOSUB RightRotate
+  ENDIF
+
+PAUSE 100
+GOTO READ_Sensor
+
+ForwardMove:
+  reps = 1
+  FOR reps = 1 TO moveDistance
+    PULSOUT 13, 2125
+    PULSOUT 12, 1625
+  NEXT
+RETURN
+
+LeftRotate:
+  reps = 1
+  FOR reps = 1 TO moveDistance
+  PULSOUT 13, 1625
+  PULSOUT 12, 1625
+    NEXT
+RETURN
+
+LeftPivot:
+reps = 1
+  FOR reps = 1 TO moveDistance
+  PULSOUT 13, 1875
+  PULSOUT 12, 1625
+    NEXT
+RETURN
+
+RightRotate:
+reps = 1
+  FOR reps = 1 TO moveDistance
+  PULSOUT 13, 2125
+  PULSOUT 12, 2125
+    NEXT
+RETURN
+
+RightPivot:
+reps = 1
+  FOR reps = 1 TO moveDistance
+  PULSOUT 13, 2125
+  PULSOUT 12, 1875
+    NEXT
+RETURN
