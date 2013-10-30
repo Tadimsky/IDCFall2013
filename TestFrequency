@@ -1,0 +1,26 @@
+' {$STAMP BS2sx}
+crsrPosRow VAR Byte
+irFrequency VAR Word
+irDetect VAR Bit
+distance VAR Nib
+dummy VAR crsrPosRow
+DEBUG CLS,
+          "Click transmit windowpane, " , CR,
+           "THEN press enter TO begin " , CR,
+           "frequency sweep . . . " , CR, CR,
+           " OBJECT" , CR,
+           "FREQUENCY DETECTED" , CR,
+           "--------- --------", CR
+DO
+DEBUGIN dummy
+crsrPosRow = 6
+FOR irFrequency = 30500 TO 46500 STEP 1000
+crsrPosRow = crsrPosRow + 1
+FREQOUT 8 ,1 , irFrequency
+irDetect = IN9
+DEBUG CRSRXY, 4 , crsrPosRow , DEC5 irFrequency
+DEBUG CRSRXY, 11 , crsrPosRow
+IF (irDetect = 0) THEN DEBUG "Yes" ELSE DEBUG "No "
+PAUSE 100
+NEXT
+LOOP

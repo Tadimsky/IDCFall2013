@@ -1,0 +1,15 @@
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+
+irDetectLeft VAR Bit
+irDetectRight VAR Bit
+DO
+FREQOUT 8, 1, 38500
+FREQOUT 2, 1, 38500
+irDetectLeft = IN9
+irDetectRight = IN0
+IF irDetectLeft = 1 THEN HIGH 8 ELSE HIGH 15
+IF irDetectRight = 1 THEN HIGH 1 ELSE HIGH 3
+PAUSE 500
+
+LOOP

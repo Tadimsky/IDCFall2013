@@ -1,0 +1,14 @@
+' QtiBwDetect.bs2
+' Boe-Bot detects electrical tape with 3 QTI modules.
+'{$STAMP BS2sx}
+'{$PBASIC 2.5}
+qtiLeft VAR Bit
+qtiCenter VAR Bit
+qtiRight VAR Bit
+DO
+HIGH 5: PAUSE 1: qtiRight = IN3: INPUT 5
+HIGH 6: PAUSE 1: qtiCenter = IN3: INPUT 6
+HIGH 7: PAUSE 1: qtiLeft = IN3: INPUT 7
+DEBUG HOME, BIN1 qtiLeft, BIN1 qtiCenter, BIN1 qtiRight
+PAUSE 100
+LOOP
