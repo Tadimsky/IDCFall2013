@@ -1,12 +1,19 @@
 ' {$STAMP BS2sx}
 ' {$PBASIC 2.5}
 
+' Sensor Information
 SnsrLeft CON 10
 SnsrMiddle CON 9
 SnsrRight CON 8
 
+' Servo Pins
+ServoLeft CON 12
+ServoRight CON 13
+
+' Movement Constants
 moveDistance CON 10
 rotateDistance CON 20
+
 
 reps    VAR     Nib
 
@@ -51,50 +58,53 @@ Determine_Color:
 PAUSE 100
 GOTO READ_Sensor
 
+
+' Movement Methods
+
 ForwardMove:
   reps = 1
   FOR reps = 1 TO moveDistance
-    PULSOUT 13, 2125
-    PULSOUT 12, 1625
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 1625
   NEXT
 RETURN
 
 BackwardMove:
   reps = 1
   FOR reps = 1 TO moveDistance
-    PULSOUT 13, 1625
-    PULSOUT 12, 2125
+    PULSOUT ServoRight, 1625
+    PULSOUT ServoLeft, 2125
   NEXT
 RETURN
 
 LeftRotate:
   reps = 1
   FOR reps = 1 TO rotateDistance
-    PULSOUT 13, 1625
-    PULSOUT 12, 1625
-  NEXT
-RETURN
-
-LeftPivot:
-reps = 1
-  FOR reps = 1 TO rotateDistance
-    PULSOUT 13, 1875
-    PULSOUT 12, 1625
+    PULSOUT ServoRight, 1625
+    PULSOUT ServoLeft, 1625
   NEXT
 RETURN
 
 RightRotate:
-reps = 1
+  reps = 1
   FOR reps = 1 TO rotateDistance
-    PULSOUT 13, 2125
-    PULSOUT 12, 2125
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 2125
   NEXT
 RETURN
 
 RightPivot:
-reps = 1
+  reps = 1
   FOR reps = 1 TO rotateDistance
-    PULSOUT 13, 2125
-    PULSOUT 12, 1875
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 1875
+  NEXT
+RETURN
+
+LeftPivot:
+  reps = 1
+  FOR reps = 1 TO rotateDistance
+    PULSOUT ServoRight, 1875
+    PULSOUT ServoLeft, 1625
   NEXT
 RETURN
