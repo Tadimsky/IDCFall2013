@@ -30,7 +30,7 @@ rotateDistance CON 20
 
 ' Thresholds
 blackColor CON 500
-readDistance CON 12
+readDistance CON 13
 
 reps    VAR     Nib
 
@@ -39,14 +39,21 @@ middleDuration VAR Word
 rightDuration VAR Word
 
 DO
-  ' GOSUB ReadWhiskers
+  GOSUB ReadWhiskers
+  GOSUB Read_Sensor
   GOSUB ReadPing
+
   IF inDistance < readDistance THEN
-    GOSUB Read_Sensor
     GOSUB Determine_Color
   ELSE
-    GOSUB MoveForward
+    IF inDistance > 150 THEN
+      GOSUB FollowLine
+    ELSE
+      GOSUB MoveForward
+    ENDIF
   ENDIF
+
+SkipRest:
 LOOP
 
 Read_Sensor:
@@ -130,7 +137,7 @@ MoveBackward:
   FOR reps = 1 TO moveDistance
     PULSOUT ServoRight, 1625
     PULSOUT ServoLeft, 2125
-    PAUSE 20
+    PAUSE 10
   NEXT
 RETURN
 
@@ -139,7 +146,7 @@ LeftRotate:
   FOR reps = 1 TO 3
     PULSOUT ServoRight, 1625
     PULSOUT ServoLeft, 1625
-    PAUSE 20
+    PAUSE 10
   NEXT
 RETURN
 
@@ -148,8 +155,20 @@ RightRotate:
   FOR reps = 1 TO 3
     PULSOUT ServoRight, 2125
     PULSOUT ServoLeft, 2125
-    PAUSE 20
+    PAUSE 10
   NEXT
+RETURN
+
+LeftAdjust:
+  PULSOUT ServoRight, 1750
+  PULSOUT ServoLeft, 1750
+  PAUSE 10
+RETURN
+
+RightAdjust:
+  PULSOUT ServoRight, 2000
+  PULSOUT ServoLeft, 2000
+  PAUSE 10
 RETURN
 
 RightPivot:
@@ -171,7 +190,7 @@ LeftPivot:
 RETURN
 
 ReadPing:
-  PULSOUT Ping_Pin, 5              ' Send short pulse to Ping
+  PULSOUT Ping_Pin, 13              ' Send short pulse to Ping
   PULSIN Ping_Pin, 1, time         ' Wait for echo
   inDistance = inConstant ** time  ' Convert to inches
   DEBUG CR, "Distance = ", DEC inDistance         ' Display result
@@ -180,10 +199,38 @@ RETURN
 
 ReadWhiskers:
   IF IN14 = 0 THEN
+    GOSUB MoveBackward
     GOSUB RightRotate
+    GOTO SkipRest
   ENDIF
-
   IF IN0 = 0 THEN
+    GOSUB MoveBackward
     GOSUB LeftRotate
+    GOTO SkipRest
+  ENDIF
+RETURN
+
+FollowLine:  
+  IF middleDuration > blackColor THEN
+    IF leftDuration > blackColor THEN
+      IF rightDuration > blackColor THEN
+        ' GOSUB MoveForward ' Reached the 3 lines
+      ELSE
+        GOSUB RightAdjust
+      ENDIF
+    ELSE
+      IF rightDuration > blackColor THEN
+         GOSUB LeftAdjust
+      ELSE
+        GOSUB MoveForward
+      ENDIF
+    ENDIF
+  ELSE
+    IF leftDuration > blackColor THEN
+       GOSUB RightAdjust
+    ENDIF
+    IF rightDuration > blackColor THEN
+      GOSUB LeftAdjust
+    ENDIF
   ENDIF
 RETURN
