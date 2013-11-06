@@ -1,0 +1,15 @@
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+
+Ping_Pin    CON   15
+InConstant  CON   890
+inDistance  VAR   Word
+time        VAR   Word
+
+DO
+  PULSOUT Ping_Pin, 5              ' Send short pulse to Ping
+  PULSIN Ping_Pin, 1, time         ' Wait for echo
+  inDistance = inConstant ** time  ' Convert to inches
+  DEBUG CR, DEC inDistance         ' Display result
+  PAUSE 200         ' Short delay until next read
+LOOP
