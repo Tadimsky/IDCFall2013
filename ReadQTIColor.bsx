@@ -43,11 +43,9 @@ READ_Sensor:
 
 Determine_Color:
 
-  ' If Middle reads as black
-  IF (middleDuration > blackColor) THEN
-    ' If left reads as black
-    IF (leftDuration > blackColor) THEN
-      ' If right reads as black
+  
+  IF (middleDuration > blackColor) THEN  
+    IF (leftDuration > blackColor) THEN      
       IF (rightDuration > blackColor) THEN
         ' Left, Middle, Right are black
         ' Definitely on a square
