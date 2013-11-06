@@ -13,12 +13,19 @@ InConstant  CON   890
 inDistance  VAR   Word
 time        VAR   Word
 
+' Whiskers
+leftWhisker CON 14
+rightWhisker CON 0
+
+leftDetected VAR Bit
+rightDetected VAR Bit
+
 ' Servo Pins
 ServoLeft CON 12
 ServoRight CON 13
 
 ' Movement Constants
-moveDistance CON 10
+moveDistance CON 5
 rotateDistance CON 20
 
 ' Thresholds
@@ -32,6 +39,7 @@ middleDuration VAR Word
 rightDuration VAR Word
 
 DO
+  ' GOSUB ReadWhiskers
   GOSUB ReadPing
   IF inDistance < readDistance THEN
     GOSUB Read_Sensor
@@ -66,16 +74,16 @@ Determine_Color:
         ' Left, Middle, Right are black
         ' Definitely on a square
         DEBUG "Left, Middle, Right are Black", CR
-        GOSUB LeftRotate
-        GOSUB LeftRotate
+        GOSUB LeftPivot
+        GOSUB LeftPivot
         GOSUB MoveForward
         GOSUB MoveForward
       ELSE
         ' Left, Middle are black
         ' Could be on a square
         DEBUG "Left, Middle are Black", CR
-        GOSUB LeftRotate
-        GOSUB LeftRotate
+        GOSUB LeftPivot
+        GOSUB LeftPivot
         GOSUB MoveForward
         GOSUB MoveForward
       ENDIF
@@ -84,8 +92,8 @@ Determine_Color:
         ' Middle, Right are black
         ' Could be on a square
         DEBUG "Middle, Right are Black", CR
-        GOSUB LeftRotate
-        GOSUB LeftRotate
+        GOSUB LeftPivot
+        GOSUB LeftPivot
         GOSUB MoveForward
         GOSUB MoveForward
       ELSE
@@ -98,12 +106,12 @@ Determine_Color:
     ' Nothing Reads as Black
     ' On red or silver
     DEBUG "Nothing is Black", CR
-    GOSUB RightRotate
-    GOSUB RightRotate
+    GOSUB RightPivot
+    GOSUB RightPivot
     GOSUB MoveForward
     GOSUB MoveForward
   ENDIF
-PAUSE 100
+PAUSE 50
 RETURN
 
 ' Movement Methods
@@ -128,7 +136,7 @@ RETURN
 
 LeftRotate:
   reps = 1
-  FOR reps = 1 TO 10
+  FOR reps = 1 TO 3
     PULSOUT ServoRight, 1625
     PULSOUT ServoLeft, 1625
     PAUSE 20
@@ -137,7 +145,7 @@ RETURN
 
 RightRotate:
   reps = 1
-  FOR reps = 1 TO 10
+  FOR reps = 1 TO 3
     PULSOUT ServoRight, 2125
     PULSOUT ServoLeft, 2125
     PAUSE 20
@@ -146,17 +154,19 @@ RETURN
 
 RightPivot:
   reps = 1
-  FOR reps = 1 TO rotateDistance
+  FOR reps = 1 TO 12
     PULSOUT ServoRight, 2125
     PULSOUT ServoLeft, 1875
+    PAUSE 50
   NEXT
 RETURN
 
 LeftPivot:
   reps = 1
-  FOR reps = 1 TO rotateDistance
+  FOR reps = 1 TO 12
     PULSOUT ServoRight, 1875
     PULSOUT ServoLeft, 1625
+    PAUSE 50
   NEXT
 RETURN
 
@@ -166,4 +176,14 @@ ReadPing:
   inDistance = inConstant ** time  ' Convert to inches
   DEBUG CR, "Distance = ", DEC inDistance         ' Display result
   PAUSE 200         ' Short delay until next read
+RETURN
+
+ReadWhiskers:
+  IF IN14 = 0 THEN
+    GOSUB RightRotate
+  ENDIF
+
+  IF IN0 = 0 THEN
+    GOSUB LeftRotate
+  ENDIF
 RETURN

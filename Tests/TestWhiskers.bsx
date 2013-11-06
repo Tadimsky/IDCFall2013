@@ -1,0 +1,15 @@
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+
+leftWhisker CON 14
+rightWhisker CON 0
+
+DEBUG "WHISKER STATES", CR,
+"Left Right", CR,
+"------ ------"
+DO
+DEBUG CRSRXY, 0, 3,
+"left = ", BIN1 IN14,
+" right = ", BIN1 IN0
+PAUSE 50
+LOOP
