@@ -14,6 +14,9 @@ ServoRight CON 13
 moveDistance CON 10
 rotateDistance CON 20
 
+' Thresholds
+blackColor CON 1000
+
 
 reps    VAR     Nib
 
@@ -39,25 +42,35 @@ READ_Sensor:
   DEBUG "Right Color", DEC rightDuration, CR
 
 Determine_Color:
-  IF middleDuration < 10 THEN
-    'GOSUB LeftRotate
-    'GOSUB ForwardMove
-    'GOSUB ForwardMove
-  ENDIF
 
-  IF middleDuration > 100 THEN
-    'GOSUB ForwardMove
-  ENDIF
-
-  IF middleDuration < 100 AND middleDuration > 10 THEN
-    'GOSUB RightRotate
-    'GOSUB ForwardMove
-    'GOSUB ForwardMove
+  ' If Middle reads as black
+  IF (middleDuration > blackColor) THEN
+    ' If left reads as black
+    IF (leftDuration > blackColor) THEN
+      ' If right reads as black
+      IF (rightDuration > blackColor) THEN
+        ' Left, Middle, Right are black
+        ' Definitely on a square
+      ELSE
+        ' Left, Middle are black
+        ' Could be on a square
+      ENDIF
+    ELSE
+      IF (rightDuration > blackColor) THEN
+        ' Middle, Right are black
+        ' Could be on a square
+      ELSE
+        ' Only middle is black
+        ' Line Following? 
+      ENDIF
+    ENDIF
+  ELSE
+    ' Nothing Reads as Black
+    ' On red or silver
   ENDIF
 
 PAUSE 100
 GOTO READ_Sensor
-
 
 ' Movement Methods
 
