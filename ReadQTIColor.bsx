@@ -13,6 +13,10 @@ InConstant  CON   890
 inDistance  VAR   Word
 time        VAR   Word
 
+
+' State
+stateFollowLine VAR Word
+
 ' Whiskers
 leftWhisker CON 14
 rightWhisker CON 0
@@ -30,7 +34,7 @@ rotateDistance CON 20
 
 ' Thresholds
 blackColor CON 500
-readDistance CON 13
+readDistance CON 11
 
 reps    VAR     Nib
 
@@ -38,15 +42,18 @@ leftDuration VAR Word
 middleDuration VAR Word
 rightDuration VAR Word
 
+stateFollowLine  = 0
+
 DO
   GOSUB ReadWhiskers
   GOSUB Read_Sensor
   GOSUB ReadPing
 
-  IF inDistance < readDistance THEN
+  IF inDistance < readDistance AND stateFollowLine  = 0 THEN
     GOSUB Determine_Color
   ELSE
-    IF inDistance > 150 THEN
+    IF inDistance > 150 OR stateFollowLine  = 1 THEN
+      stateFollowLine = 1
       GOSUB FollowLine
     ELSE
       GOSUB MoveForward
@@ -132,12 +139,18 @@ MoveForward:
   NEXT
 RETURN
 
+LineForward:
+  PULSOUT ServoRight, 2000
+  PULSOUT ServoLeft, 1750
+  PAUSE 5
+RETURN
+
 MoveBackward:
   reps = 1
   FOR reps = 1 TO moveDistance
     PULSOUT ServoRight, 1625
     PULSOUT ServoLeft, 2125
-    PAUSE 10
+    PAUSE 3
   NEXT
 RETURN
 
@@ -162,13 +175,13 @@ RETURN
 LeftAdjust:
   PULSOUT ServoRight, 1750
   PULSOUT ServoLeft, 1750
-  PAUSE 10
+  PAUSE 30
 RETURN
 
 RightAdjust:
   PULSOUT ServoRight, 2000
   PULSOUT ServoLeft, 2000
-  PAUSE 10
+  PAUSE 30
 RETURN
 
 RightPivot:
@@ -194,7 +207,7 @@ ReadPing:
   PULSIN Ping_Pin, 1, time         ' Wait for echo
   inDistance = inConstant ** time  ' Convert to inches
   DEBUG CR, "Distance = ", DEC inDistance         ' Display result
-  PAUSE 200         ' Short delay until next read
+  PAUSE 100         ' Short delay until next read
 RETURN
 
 ReadWhiskers:
@@ -210,27 +223,33 @@ ReadWhiskers:
   ENDIF
 RETURN
 
-FollowLine:  
+FollowLine:
   IF middleDuration > blackColor THEN
-    IF leftDuration > blackColor THEN
-      IF rightDuration > blackColor THEN
-        ' GOSUB MoveForward ' Reached the 3 lines
-      ELSE
-        GOSUB RightAdjust
-      ENDIF
+    IF leftDuration > blackColor AND rightDuration > blackColor THEN
+      STOP
     ELSE
-      IF rightDuration > blackColor THEN
-         GOSUB LeftAdjust
-      ELSE
-        GOSUB MoveForward
+      IF leftDuration > blackColor THEN
+        GOSUB RightRotate
       ENDIF
+      IF rightDuration > blackColor THEN
+        GOSUB LeftRotate
+      ENDIF
+      GOSUB LineForward
     ENDIF
+
   ELSE
     IF leftDuration > blackColor THEN
-       GOSUB RightAdjust
-    ENDIF
-    IF rightDuration > blackColor THEN
       GOSUB LeftAdjust
     ENDIF
+    IF rightDuration > blackColor THEN
+      GOSUB RightAdjust
+    ENDIF
   ENDIF
+
+  IF middleDuration < blackColor AND leftDuration < blackColor AND rightDuration < blackColor THEN
+    GOSUB LineForward
+  ELSE
+    ' GOSUB LineForward
+  ENDIF
+
 RETURN
