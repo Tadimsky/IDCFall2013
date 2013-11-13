@@ -11,6 +11,7 @@ Ping_Pin    CON   15
 
 InConstant  CON   890
 inDistance  VAR   Word
+maxDistance  VAR   Word
 time        VAR   Word
 
 
@@ -48,11 +49,11 @@ stateShouldStop = 0
 
 DO
   GOSUB ReadWhiskers
-  GOSUB Read_Sensor
+  GOSUB ReadColors
   GOSUB ReadPing
 
   IF inDistance < readDistance AND stateFollowLine  = 0 THEN
-    GOSUB Determine_Color
+    GOSUB DetermineColor
   ELSE
     IF inDistance > 150 OR stateFollowLine = 1 THEN
       stateFollowLine = 1
@@ -65,7 +66,7 @@ DO
 SkipRest:
 LOOP
 
-Read_Sensor:
+ReadColors:
   HIGH SnsrLeft
   PAUSE 1
   RCTIME SnsrLeft, 1, leftDuration
@@ -83,7 +84,7 @@ Read_Sensor:
   DEBUG "Right Color", DEC rightDuration, CR
 RETURN
 
-Determine_Color:
+DetermineColor:
   IF (middleDuration > blackColor) THEN
     IF (leftDuration > blackColor) THEN
       IF (rightDuration > blackColor) THEN
@@ -225,6 +226,7 @@ ReadWhiskers:
 RETURN
 
 FollowLine:
+
   IF middleDuration > blackColor THEN
     IF leftDuration > blackColor AND rightDuration > blackColor THEN
       STOP
@@ -250,9 +252,54 @@ FollowLine:
   ENDIF
 
   IF middleDuration < blackColor AND leftDuration < blackColor AND rightDuration < blackColor THEN
-    GOSUB LineForward
+    IF inDistance < 5 THEN
+      GOSUB FindExit
+    ELSE
+      GOSUB LineForward
+    ENDIF
   ELSE
     ' GOSUB LineForward
   ENDIF
 
+RETURN
+
+
+FindExit:
+  counter VAR Nib
+  FOR counter = 0 TO 5
+    GOSUB MoveBackward
+    PAUSE 10
+  NEXT
+
+  maxDistance = 0
+
+  leftTurn VAR Nib
+  leftTurn = 0
+
+  FOR counter = 0 TO 5
+    GOSUB LeftAdjust
+    GOSUB ReadPing
+    IF inDistance > maxDistance THEN
+      leftTurn = counter + 5
+      maxDistance = inDistance
+    ENDIF
+  NEXT
+
+  FOR counter = 0 TO 5
+    GOSUB RightAdjust
+  NEXT
+
+
+  FOR counter = 0 TO 5
+    GOSUB RightAdjust
+    GOSUB ReadPing
+    IF inDistance > maxDistance THEN
+      leftTurn = 5 - counter
+      maxDistance = inDistance
+    ENDIF
+  NEXT
+
+  FOR counter = 0 TO leftTurn + 1
+    GOSUB LeftAdjust
+  NEXT
 RETURN
