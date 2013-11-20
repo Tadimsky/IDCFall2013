@@ -1,0 +1,40 @@
+' {$STAMP BS2sx}
+'COMMUNICATIONS
+T9600 CON 240
+Baud CON T9600            ' Set Baud rate
+Rx CON 15                 ' XBee DOUT
+Tx CON 14                 ' XBee DIN
+DataIn VAR Word           ' Received data
+Bot1 VAR Nib              ' Bot states
+Bot2 VAR Nib
+Bot3 VAR Nib
+Bot4 VAR Nib
+'Initialization
+Bot1 = 0
+Bot2 = 0
+Bot3 = 0
+Bot4 = 0
+DataIn = 0
+
+ 'COMMUNICATIONS CODE
+                DO
+                   SEROUT Tx, Baud,[1]
+                   SERIN Rx, Baud, [DataIn]
+
+                   IF DataIn = 2 THEN
+                      Bot2 = 1
+                      HIGH 9
+                   ELSEIF DataIn = 3 THEN
+                      Bot3 = 1
+                      HIGH 8
+                   ELSEIF DataIn = 4 THEN
+                      Bot4 = 1
+                      HIGH 4
+                   ENDIF
+
+                   IF(Bot1=1 AND Bot2=1 AND Bot3=1 AND Bot4=1) THEN  ' When all bots are finished
+                      EXIT
+                   ENDIF
+
+                   PAUSE 2
+                LOOP
