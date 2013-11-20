@@ -1,0 +1,365 @@
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+
+' Sensor Information
+SnsrLeft CON 10
+SnsrMiddle CON 9
+SnsrRight CON 8
+
+' Ping Sensor
+Ping_Pin    CON   15
+
+InConstant  CON   890
+inDistance  VAR   Word
+maxDistance  VAR   Word
+time        VAR   Word
+
+
+' State
+stateFollowLine VAR Word
+stateShouldStop VAR Word
+
+' Whiskers
+leftWhisker CON 14
+rightWhisker CON 0
+
+leftDetected VAR Bit
+rightDetected VAR Bit
+
+' Servo Pins
+ServoLeft CON 12
+ServoRight CON 13
+
+' Movement Constants
+moveDistance CON 5
+rotateDistance CON 20
+
+' Thresholds
+blackColor CON 500
+readDistance CON 11
+
+reps    VAR     Nib
+
+leftDuration VAR Word
+middleDuration VAR Word
+rightDuration VAR Word
+
+stateFollowLine = 0
+stateShouldStop = 0
+
+' Communication Code
+T9600 CON 240
+Baud CON T9600            ' Set Baud rate
+Rx CON 2                 ' XBee DOUT
+Tx CON 1                 ' XBee DIN
+
+' We are Bot 4 - 0 indexed array
+OurBot CON 3
+
+DataIn VAR Word           ' Received data
+DataIn = 0
+
+myBots  VAR     Bit(4)
+  myBots(0) = 0
+  myBots(1) = 0
+  myBots(2) = 0
+  myBots(3) = 0
+
+myBots(OurBot) = 1
+
+
+DO
+  GOSUB ReadWhiskers
+  GOSUB ReadColors
+  GOSUB ReadPing
+
+  IF inDistance < readDistance AND stateFollowLine  = 0 THEN
+    GOSUB DetermineColor
+  ELSE
+    IF inDistance > 150 OR stateFollowLine = 1 THEN
+      stateFollowLine = 1
+      GOSUB FollowLine
+    ELSE
+      GOSUB MoveForward
+    ENDIF
+  ENDIF
+
+SkipRest:
+LOOP
+
+ReadColors:
+  HIGH SnsrLeft
+  PAUSE 1
+  RCTIME SnsrLeft, 1, leftDuration
+
+  HIGH SnsrMiddle
+  PAUSE 1
+  RCTIME SnsrMiddle, 1, middleDuration
+
+  HIGH SnsrRight
+  PAUSE 1
+  RCTIME SnsrRight, 1, rightDuration
+
+  DEBUG CLS, "Left Color", DEC leftDuration, CR
+  DEBUG "Middle Color", DEC middleDuration, CR
+  DEBUG "Right Color", DEC rightDuration, CR
+RETURN
+
+DetermineColor:
+  IF (middleDuration > blackColor) THEN
+    IF (leftDuration > blackColor) THEN
+      IF (rightDuration > blackColor) THEN
+        ' Left, Middle, Right are black
+        ' Definitely on a square
+        DEBUG "Left, Middle, Right are Black", CR
+        GOSUB LeftPivot
+        GOSUB LeftPivot
+        GOSUB MoveForward
+        GOSUB MoveForward
+      ELSE
+        ' Left, Middle are black
+        ' Could be on a square
+        DEBUG "Left, Middle are Black", CR
+        GOSUB LeftPivot
+        GOSUB LeftPivot
+        GOSUB MoveForward
+        GOSUB MoveForward
+      ENDIF
+    ELSE
+      IF (rightDuration > blackColor) THEN
+        ' Middle, Right are black
+        ' Could be on a square
+        DEBUG "Middle, Right are Black", CR
+        GOSUB LeftPivot
+        GOSUB LeftPivot
+        GOSUB MoveForward
+        GOSUB MoveForward
+      ELSE
+        ' Only middle is black
+        ' Line Following?
+        DEBUG "Middle is Black", CR
+      ENDIF
+    ENDIF
+  ELSE
+    ' Nothing Reads as Black
+    ' On red or silver
+    DEBUG "Nothing is Black", CR
+    GOSUB RightPivot
+    GOSUB RightPivot
+    GOSUB MoveForward
+    GOSUB MoveForward
+  ENDIF
+PAUSE 50
+RETURN
+
+' Movement Methods
+
+MoveForward:
+  reps = 1
+  FOR reps = 1 TO moveDistance
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 1625
+    PAUSE 20
+  NEXT
+RETURN
+
+LineForward:
+  PULSOUT ServoRight, 2000
+  PULSOUT ServoLeft, 1750
+  PAUSE 5
+RETURN
+
+MoveBackward:
+  reps = 1
+  FOR reps = 1 TO moveDistance
+    PULSOUT ServoRight, 1625
+    PULSOUT ServoLeft, 2125
+    PAUSE 3
+  NEXT
+RETURN
+
+LeftRotate:
+  reps = 1
+  FOR reps = 1 TO 4
+    PULSOUT ServoRight, 1625
+    PULSOUT ServoLeft, 1625
+    PAUSE 10
+  NEXT
+RETURN
+
+RightRotate:
+  reps = 1
+  FOR reps = 1 TO 4
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 2125
+    PAUSE 10
+  NEXT
+RETURN
+
+LeftAdjust:
+  PULSOUT ServoRight, 1750
+  PULSOUT ServoLeft, 1750
+  PAUSE 30
+RETURN
+
+RightAdjust:
+  PULSOUT ServoRight, 2000
+  PULSOUT ServoLeft, 2000
+  PAUSE 30
+RETURN
+
+RightPivot:
+  reps = 1
+  FOR reps = 1 TO 12
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 1875
+    PAUSE 50
+  NEXT
+RETURN
+
+LeftPivot:
+  reps = 1
+  FOR reps = 1 TO 12
+    PULSOUT ServoRight, 1875
+    PULSOUT ServoLeft, 1625
+    PAUSE 50
+  NEXT
+RETURN
+
+ReadPing:
+  PULSOUT Ping_Pin, 13              ' Send short pulse to Ping
+  PULSIN Ping_Pin, 1, time         ' Wait for echo
+  inDistance = inConstant ** time  ' Convert to inches
+  DEBUG CR, "Distance = ", DEC inDistance         ' Display result
+RETURN
+
+ReadWhiskers:
+  IF IN14 = 0 THEN
+    GOSUB MoveBackward
+    GOSUB RightRotate
+    GOTO SkipRest
+  ENDIF
+  IF IN0 = 0 THEN
+    GOSUB MoveBackward
+    GOSUB LeftRotate
+    GOTO SkipRest
+  ENDIF
+RETURN
+
+FollowLine:
+  IF middleDuration > blackColor THEN
+    IF leftDuration > blackColor AND rightDuration > blackColor THEN
+      STOP
+    ELSE
+      IF leftDuration > blackColor THEN
+        GOSUB RightRotate
+        stateShouldStop = 1
+        GOSUB WaitForBots
+      ENDIF
+      IF rightDuration > blackColor THEN
+        GOSUB LeftRotate
+        stateShouldStop = 1
+        GOSUB WaitForBots
+      ENDIF
+      GOSUB LineForward
+    ENDIF
+
+  ELSE
+    IF leftDuration > blackColor THEN
+      GOSUB LeftAdjust
+    ENDIF
+    IF rightDuration > blackColor THEN
+      GOSUB RightAdjust
+    ENDIF
+  ENDIF
+
+  IF middleDuration < blackColor AND leftDuration < blackColor AND rightDuration < blackColor THEN
+    IF inDistance < 5 THEN
+      GOSUB FindExit
+    ELSE
+      GOSUB LineForward
+    ENDIF
+  ELSE
+    ' GOSUB LineForward
+  ENDIF
+
+RETURN
+
+
+FindExit:
+  counter VAR Nib
+
+  FOR counter = 0 TO 5
+    GOSUB MoveBackward
+    PAUSE 10
+  NEXT
+
+  numToTurn VAR Nib
+  numToTurn = 5
+  maxDistance = 0
+
+  leftTurn VAR Nib
+
+  DO WHILE (maxDistance < 150)
+    leftTurn = 0
+
+    ' Sweep to the Left
+    FOR counter = 0 TO numToTurn
+      GOSUB LeftAdjust
+      GOSUB ReadPing
+      IF inDistance > maxDistance THEN
+        leftTurn = counter + numToTurn
+        maxDistance = inDistance
+      ENDIF
+    NEXT
+
+    ' Return to the Center
+    FOR counter = 0 TO numToTurn
+      GOSUB RightAdjust
+    NEXT
+
+    ' Sweep to the Right
+    FOR counter = 0 TO numToTurn
+      GOSUB RightAdjust
+      GOSUB ReadPing
+      IF inDistance > maxDistance THEN
+        leftTurn = numToTurn - counter
+        maxDistance = inDistance
+      ENDIF
+    NEXT
+
+    IF maxDistance < 150 THEN
+      numToTurn = numToTurn + 5
+      ' Return to the Center
+      FOR counter = 0 TO numToTurn
+        GOSUB LeftAdjust
+      NEXT
+      GOSUB MoveBackward
+    ELSE
+      FOR counter = 0 TO leftTurn + 1
+        GOSUB LeftAdjust
+      NEXT
+    ENDIF
+
+  LOOP
+RETURN
+
+
+WaitForBots:
+  DO
+    GOSUB TransmitXbee
+    IF (myBots(0) = 1 AND myBots(1) = 1 AND  myBots(2) = 1 AND  myBots(3) = 1) THEN
+      GOSUB FollowLine
+    ENDIF
+  LOOP
+RETURN
+
+TransmitXbee:
+  SEROUT Tx, Baud, [OurBot]
+  SERIN Rx, Baud, [DataIn]
+
+  IF DataIn > 0 AND DataIn < 5 THEN
+    myBots(DataIn - 1) = 1
+  ENDIF
+  PAUSE 2
+RETURN

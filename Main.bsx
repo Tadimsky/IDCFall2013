@@ -1,6 +1,42 @@
-' {$STAMP BS2sx}
+' {$STAMP BS2sx, Movement.bsx, Comm.bsx}
 ' {$PBASIC 2.5}
 
+' Sensor Information
+SnsrLeft CON 10
+SnsrMiddle CON 9
+SnsrRight CON 8
+
+' Ping Sensor
+Ping_Pin    CON   15
+
+InConstant  CON   890
+inDistance  VAR   Word
+maxDistance  VAR   Word
+time        VAR   Word
+
+
+' State
+stateFollowLine VAR Word
+stateShouldStop VAR Word
+
+' Whiskers
+leftWhisker CON 14
+rightWhisker CON 0
+
+leftDetected VAR Bit
+rightDetected VAR Bit
+
+' Thresholds
+blackColor CON 500
+readDistance CON 11
+
+
+leftDuration VAR Word
+middleDuration VAR Word
+rightDuration VAR Word
+
+stateFollowLine = 0
+stateShouldStop = 0
 
 
 DO
@@ -21,6 +57,65 @@ DO
 
 SkipRest:
 LOOP
+
+
+FindExit:
+  counter VAR Nib
+
+  FOR counter = 0 TO 5
+    GOSUB MoveBackward
+    PAUSE 10
+  NEXT
+
+  numToTurn VAR Nib
+  numToTurn = 5
+  maxDistance = 0
+
+  leftTurn VAR Nib
+
+  DO WHILE (maxDistance < 150)
+    leftTurn = 0
+
+    ' Sweep to the Left
+    FOR counter = 0 TO numToTurn
+      GOSUB LeftAdjust
+      GOSUB ReadPing
+      IF inDistance > maxDistance THEN
+        leftTurn = counter + numToTurn
+        maxDistance = inDistance
+      ENDIF
+    NEXT
+
+    ' Return to the Center
+    FOR counter = 0 TO numToTurn
+      GOSUB RightAdjust
+    NEXT
+
+    ' Sweep to the Right
+    FOR counter = 0 TO numToTurn
+      GOSUB RightAdjust
+      GOSUB ReadPing
+      IF inDistance > maxDistance THEN
+        leftTurn = numToTurn - counter
+        maxDistance = inDistance
+      ENDIF
+    NEXT
+
+    IF maxDistance < 150 THEN
+      numToTurn = numToTurn + 5
+      ' Return to the Center
+      FOR counter = 0 TO numToTurn
+        GOSUB LeftAdjust
+      NEXT
+      GOSUB MoveBackward
+    ELSE
+      FOR counter = 0 TO leftTurn + 1
+        GOSUB LeftAdjust
+      NEXT
+    ENDIF
+
+  LOOP
+RETURN
 
 ReadColors:
   HIGH SnsrLeft
@@ -110,7 +205,6 @@ ReadWhiskers:
     GOTO SkipRest
   ENDIF
 RETURN
-
 
 
 

@@ -1,0 +1,125 @@
+' {$STAMP BS2sx}
+' {$PBASIC 2.5}
+__Movement.bsx__
+
+' Servo Pins
+ServoLeft CON 12
+ServoRight CON 13
+
+' Movement Constants
+moveDistance CON 5
+rotateDistance CON 20
+
+reps    VAR     Nib
+
+MoveForward:
+  reps = 1
+  FOR reps = 1 TO moveDistance
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 1625
+    PAUSE 20
+  NEXT
+RETURN
+
+LineForward:
+  PULSOUT ServoRight, 2000
+  PULSOUT ServoLeft, 1750
+  PAUSE 5
+RETURN
+
+MoveBackward:
+  reps = 1
+  FOR reps = 1 TO moveDistance
+    PULSOUT ServoRight, 1625
+    PULSOUT ServoLeft, 2125
+    PAUSE 3
+  NEXT
+RETURN
+
+LeftRotate:
+  reps = 1
+  FOR reps = 1 TO 4
+    PULSOUT ServoRight, 1625
+    PULSOUT ServoLeft, 1625
+    PAUSE 10
+  NEXT
+RETURN
+
+RightRotate:
+  reps = 1
+  FOR reps = 1 TO 4
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 2125
+    PAUSE 10
+  NEXT
+RETURN
+
+LeftAdjust:
+  PULSOUT ServoRight, 1750
+  PULSOUT ServoLeft, 1750
+  PAUSE 30
+RETURN
+
+RightAdjust:
+  PULSOUT ServoRight, 2000
+  PULSOUT ServoLeft, 2000
+  PAUSE 30
+RETURN
+
+RightPivot:
+  reps = 1
+  FOR reps = 1 TO 12
+    PULSOUT ServoRight, 2125
+    PULSOUT ServoLeft, 1875
+    PAUSE 50
+  NEXT
+RETURN
+
+LeftPivot:
+  reps = 1
+  FOR reps = 1 TO 12
+    PULSOUT ServoRight, 1875
+    PULSOUT ServoLeft, 1625
+    PAUSE 50
+  NEXT
+RETURN
+
+
+FollowLine:
+  IF middleDuration > blackColor THEN
+    IF leftDuration > blackColor AND rightDuration > blackColor THEN
+      STOP
+    ELSE
+      IF leftDuration > blackColor THEN
+        GOSUB RightRotate
+        stateShouldStop = 1
+        GOSUB WaitForBots
+      ENDIF
+      IF rightDuration > blackColor THEN
+        GOSUB LeftRotate
+        stateShouldStop = 1
+        GOSUB WaitForBots
+      ENDIF
+      GOSUB LineForward
+    ENDIF
+
+  ELSE
+    IF leftDuration > blackColor THEN
+      GOSUB LeftAdjust
+    ENDIF
+    IF rightDuration > blackColor THEN
+      GOSUB RightAdjust
+    ENDIF
+  ENDIF
+
+  IF middleDuration < blackColor AND leftDuration < blackColor AND rightDuration < blackColor THEN
+    IF inDistance < 5 THEN
+      GOSUB FindExit
+    ELSE
+      GOSUB LineForward
+    ENDIF
+  ELSE
+    ' GOSUB LineForward
+  ENDIF
+
+RETURN

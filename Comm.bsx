@@ -1,40 +1,41 @@
 ' {$STAMP BS2sx}
-'COMMUNICATIONS
+' {$PBASIC 2.5}
+
+' Communication Code
 T9600 CON 240
 Baud CON T9600            ' Set Baud rate
-Rx CON 15                 ' XBee DOUT
-Tx CON 14                 ' XBee DIN
+Rx CON 2                 ' XBee DOUT
+Tx CON 1                 ' XBee DIN
+
+' We are Bot 4 - 0 indexed array
+OurBot CON 3
+
 DataIn VAR Word           ' Received data
-Bot1 VAR Nib              ' Bot states
-Bot2 VAR Nib
-Bot3 VAR Nib
-Bot4 VAR Nib
-'Initialization
-Bot1 = 0
-Bot2 = 0
-Bot3 = 0
-Bot4 = 0
 DataIn = 0
 
- 'COMMUNICATIONS CODE
-                DO
-                   SEROUT Tx, Baud,[1]
-                   SERIN Rx, Baud, [DataIn]
+myBots  VAR     Bit(4)
+  myBots(0) = 0
+  myBots(1) = 0
+  myBots(2) = 0
+  myBots(3) = 0
 
-                   IF DataIn = 2 THEN
-                      Bot2 = 1
-                      HIGH 9
-                   ELSEIF DataIn = 3 THEN
-                      Bot3 = 1
-                      HIGH 8
-                   ELSEIF DataIn = 4 THEN
-                      Bot4 = 1
-                      HIGH 4
-                   ENDIF
+myBots(OurBot) = 1
 
-                   IF(Bot1=1 AND Bot2=1 AND Bot3=1 AND Bot4=1) THEN  ' When all bots are finished
-                      EXIT
-                   ENDIF
+WaitForBots:
+  DO
+    GOSUB TransmitXbee
+    IF (myBots(0) = 1 AND myBots(1) = 1 AND  myBots(2) = 1 AND  myBots(3) = 1) THEN
+      GOSUB FollowLine
+    ENDIF
+  LOOP
+RETURN
 
-                   PAUSE 2
-                LOOP
+TransmitXbee:
+  SEROUT Tx, Baud, [OurBot]
+  SERIN Rx, Baud, [DataIn]
+
+  IF DataIn > 0 AND DataIn < 5 THEN
+    myBots(DataIn - 1) = 1
+  ENDIF
+  PAUSE 2
+RETURN
